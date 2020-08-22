@@ -262,18 +262,18 @@ typeToJSON annToJSON ty =
   go = typeToJSON annToJSON
 
   variant :: A.ToJSON b => String -> a -> b -> A.Value
-  variant tag ann contents =
+  variant tag _ contents =
     A.object
       [ "tag"        .= tag
-      , "annotation" .= annToJSON ann
+      --, "annotation" .= annToJSON ann
       , "contents"   .= contents
       ]
 
   nullary :: String -> a -> A.Value
-  nullary tag ann =
+  nullary tag _ =
     A.object
       [ "tag"        .= tag
-      , "annotation" .= annToJSON ann
+      --, "annotation" .= annToJSON ann
       ]
 
 instance A.ToJSON a => A.ToJSON (Type a) where
