@@ -205,7 +205,7 @@ exprFromJSON modulePath = withObject "Expr" exprFromObj
     tyn <- o .: "typeName" >>= properNameFromJSON
     con <- o .: "constructorName" >>= properNameFromJSON
     is  <- o .: "fieldNames" >>= listParser identFromJSON
-    return $ Constructor ann tyn con is
+    return $ Constructor ann tyn con is []
 
   accessorFromObj o = do
     ann <- o .: "annotation" >>= annFromJSON modulePath

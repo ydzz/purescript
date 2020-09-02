@@ -30,6 +30,7 @@ import Language.PureScript.PSString (mkString)
 import qualified Language.PureScript.AST as A
 import qualified Language.PureScript.Constants.Prim as C
 
+
 -- | Desugars a module from AST to CoreFn representation.
 moduleToCoreFn :: Environment -> A.Module -> Module Ann
 moduleToCoreFn _ (A.Module _ _ _ _ Nothing) =
@@ -73,8 +74,11 @@ moduleToCoreFn env (A.Module modSS coms mn decls (Just exps)) =
     flip fmap ctors $ \ctorDecl ->
       let
         ctor = A.dataCtorName ctorDecl
+        types::[SourceType] = map (\(_,t) -> t) (A.dataCtorFields ctorDecl)
+        
+       
         (_, _, _, fields) = lookupConstructor env (Qualified (Just mn) ctor)
-      in NonRec (ssA ss) (properToIdent ctor) $ Constructor (ss, com, Nothing, Nothing) tyName ctor fields
+      in NonRec (ssA ss) (properToIdent ctor) $ Constructor (ss, com, Nothing, Just $ getConstructorMeta $ Qualified (Just mn) ctor) tyName ctor fields $ types
   declToCoreFn (A.DataBindingGroupDeclaration ds) =
     concatMap declToCoreFn ds
   declToCoreFn (A.ValueDecl (ss, com) name _ _ [A.MkUnguarded e]) =

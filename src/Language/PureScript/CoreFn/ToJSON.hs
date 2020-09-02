@@ -158,11 +158,12 @@ exprToJSON (Literal ann l)          = object [ T.pack "type"        .= "Literal"
                                              , T.pack "annotation"  .= annToJSON ann
                                              , T.pack "value"       .=  literalToJSON exprToJSON l
                                              ]
-exprToJSON (Constructor ann d c is) = object [ T.pack "type"        .= "Constructor"
+exprToJSON (Constructor ann d c is ts) = object [ T.pack "type"        .= "Constructor"
                                              , T.pack "annotation"  .= annToJSON ann
                                              , T.pack "typeName"    .= properNameToJSON d
                                              , T.pack "constructorName" .= properNameToJSON c
                                              , T.pack "fieldNames"  .= map identToJSON is
+                                             , T.pack "fieldTypes"  .= toJSON ts
                                              ]
 exprToJSON (Accessor ann f r)       = object [ T.pack "type"        .= "Accessor"
                                              , T.pack "annotation"  .= annToJSON ann

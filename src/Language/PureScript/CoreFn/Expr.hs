@@ -8,9 +8,10 @@ import Prelude.Compat
 import Control.Arrow ((***))
 
 import Language.PureScript.AST.Literals
+import qualified Language.PureScript.Types as T
 import Language.PureScript.CoreFn.Binders
 import Language.PureScript.Names
-import Language.PureScript.PSString (PSString)
+import  Language.PureScript.PSString (PSString)
 
 -- |
 -- Data type for expressions and terms
@@ -23,7 +24,7 @@ data Expr a
   -- |
   -- A data constructor (type name, constructor name, field names)
   --
-  | Constructor a (ProperName 'TypeName) (ProperName 'ConstructorName) [Ident]
+  | Constructor a (ProperName 'TypeName) (ProperName 'ConstructorName) [Ident] [T.SourceType]
   -- |
   -- A record property accessor
   --
@@ -97,7 +98,7 @@ instance Functor CaseAlternative where
 --
 extractAnn :: Expr a -> a
 extractAnn (Literal a _) = a
-extractAnn (Constructor a _ _ _) = a
+extractAnn (Constructor a _ _ _ _) = a
 extractAnn (Accessor a _ _) = a
 extractAnn (ObjectUpdate a _ _) = a
 extractAnn (Abs a _ _) = a
@@ -112,7 +113,7 @@ extractAnn (Let a _ _) = a
 --
 modifyAnn :: (a -> a) -> Expr a -> Expr a
 modifyAnn f (Literal a b)         = Literal (f a) b
-modifyAnn f (Constructor a b c d) = Constructor (f a) b c d
+modifyAnn f (Constructor a b c d e) = Constructor (f a) b c d e
 modifyAnn f (Accessor a b c)      = Accessor (f a) b c
 modifyAnn f (ObjectUpdate a b c)  = ObjectUpdate (f a) b c
 modifyAnn f (Abs a b c)           = Abs (f a) b c
