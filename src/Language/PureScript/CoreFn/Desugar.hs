@@ -9,6 +9,7 @@ import Data.Function (on)
 import Data.List (sort, sortBy)
 import Data.Maybe (mapMaybe)
 import Data.Tuple (swap)
+import Data.Text (Text,pack)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as M
 
@@ -24,7 +25,7 @@ import Language.PureScript.CoreFn.Module
 import Language.PureScript.Crash
 import Language.PureScript.Environment
 import Language.PureScript.Names
-import Language.PureScript.Sugar.TypeClasses (typeClassMemberName, superClassDictionaryNames)
+import Language.PureScript.Sugar.TypeClasses (typeClassMemberName, superClassDictionaryNames,typeClassMemberType)
 import Language.PureScript.Types
 import Language.PureScript.PSString (mkString)
 import qualified Language.PureScript.AST as A
@@ -268,13 +269,21 @@ exportToCoreFn (A.ReExportRef _ _ _) = []
 mkTypeClassConstructor :: SourceAnn -> [SourceConstraint] -> [A.Declaration] -> Expr Ann
 mkTypeClassConstructor (ss, com) [] [] = Literal (ss, com, Nothing, Just IsTypeClassConstructor) (ObjectLiteral [])
 mkTypeClassConstructor (ss, com) supers members =
-  let args@(a:as) = sort $ fmap typeClassMemberName members ++ superClassDictionaryNames supers
-      props = [ (mkString arg, Var (ssAnn ss) $ Qualified Nothing (Ident arg)) | arg <- args ]
+  let args@(a:as) = sort $ declListToTuple members  ++ constraintListToTuple supers
+      props = [ (mkString $ fst arg, Var ((ss,[],Just $ snd arg,Nothing) ) $ Qualified Nothing (Ident $ fst arg)) | arg <- args ]
       dict = Literal (ssAnn ss) (ObjectLiteral props)
   in Abs (ss, com, Nothing, Just IsTypeClassConstructor)
-         (Ident a)
-         (foldr (Abs (ssAnn ss) . Ident) dict as)
+         (Ident $ fst a)
+         (foldr (\(s,t) -> (Abs (ss,[], Just  t,Nothing) $ Ident s)) dict as)
 
 -- | Converts a ProperName to an Ident.
 properToIdent :: ProperName a -> Ident
 properToIdent = Ident . runProperName
+
+declListToTuple:: [A.Declaration] -> [(Text,SourceType)]
+declListToTuple arr = map (\decl -> (typeClassMemberName decl,typeClassMemberType decl)) arr
+
+constraintListToTuple::[SourceConstraint] -> [(Text,SourceType)]
+constraintListToTuple arr = map (\c-> (constraint2Name c,srcTypeVar $ constraint2Name c)) arr
+  where
+    constraint2Name con = showQualified (runProperName) (constraintClass con)

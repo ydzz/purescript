@@ -5,6 +5,7 @@
 module Language.PureScript.Sugar.TypeClasses
   ( desugarTypeClasses
   , typeClassMemberName
+  , typeClassMemberType
   , superClassDictionaryNames
   ) where
 
@@ -346,8 +347,14 @@ declIdent (ValueDeclaration vd) = Just (valdeclIdent vd)
 declIdent (TypeDeclaration td) = Just (tydeclIdent td)
 declIdent _ = Nothing
 
+
+
 typeClassMemberName :: Declaration -> Text
 typeClassMemberName = fromMaybe (internalError "typeClassMemberName: Invalid declaration in type class definition") . fmap runIdent . declIdent
+
+typeClassMemberType::Declaration -> SourceType
+typeClassMemberType (TypeDeclaration td) =  tydeclType td
+typeClassMemberType _ =  error "typeClassMemberType: Invalid declaration in type class definition" 
 
 superClassDictionaryNames :: [Constraint a] -> [Text]
 superClassDictionaryNames supers =
