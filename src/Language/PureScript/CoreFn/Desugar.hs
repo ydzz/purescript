@@ -9,7 +9,7 @@ import Data.Function (on)
 import Data.List (sort, sortBy)
 import Data.Maybe (mapMaybe)
 import Data.Tuple (swap)
-import Data.Text (Text,pack)
+import Data.Text (Text,pack,intercalate )
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as M
 
@@ -25,7 +25,7 @@ import Language.PureScript.CoreFn.Module
 import Language.PureScript.Crash
 import Language.PureScript.Environment
 import Language.PureScript.Names
-import Language.PureScript.Sugar.TypeClasses (typeClassMemberName, superClassDictionaryNames,typeClassMemberType)
+import Language.PureScript.Sugar.TypeClasses (typeClassMemberName,typeClassMemberType)
 import Language.PureScript.Types
 import Language.PureScript.PSString (mkString)
 import qualified Language.PureScript.AST as A
@@ -75,7 +75,7 @@ moduleToCoreFn env (A.Module modSS coms mn decls (Just exps)) =
     flip fmap ctors $ \ctorDecl ->
       let
         ctor = A.dataCtorName ctorDecl
-        types::[SourceType] = map (\(_,t) -> t) (A.dataCtorFields ctorDecl)
+        types::[SourceType] = map snd (A.dataCtorFields ctorDecl)
         
        
         (_, _, _, fields) = lookupConstructor env (Qualified (Just mn) ctor)
@@ -86,8 +86,9 @@ moduleToCoreFn env (A.Module modSS coms mn decls (Just exps)) =
     [NonRec (ssA ss) name (exprToCoreFn ss com Nothing e)]
   declToCoreFn (A.BindingGroupDeclaration ds) =
     [Rec . NEL.toList $ fmap (\(((ss, com), name), _, e) -> ((ssA ss, name), exprToCoreFn ss com Nothing e)) ds]
-  declToCoreFn (A.TypeClassDeclaration sa@(ss, _) name _ supers _ members) =
-    [NonRec (ssA ss) (properToIdent name) $ mkTypeClassConstructor sa supers members]
+  declToCoreFn (A.TypeClassDeclaration sa@(ss, _) name types supers _ members) =
+    let mayType = Just $ TypeVar (ss,[]) (intercalate  "," (map fst types) )
+    in [NonRec (ss,[],mayType ,Nothing) (properToIdent name) $ mkTypeClassConstructor sa supers members]
   declToCoreFn _ = []
 
   -- | Desugars expressions from AST to CoreFn representation.
