@@ -39,6 +39,7 @@ metaToJSON IsNewtype              = object [ T.pack "metaType"  .= "IsNewtype" ]
 metaToJSON IsTypeClassConstructor = object [ T.pack "metaType"  .= "IsTypeClassConstructor" ]
 metaToJSON IsForeign              = object [ T.pack "metaType"  .= "IsForeign" ]
 metaToJSON IsWhere                = object [ T.pack "metaType"  .= "IsWhere" ]
+metaToJSON IsTypeClassMember      = object [ T.pack "metaType"  .= "IsTypeClassMember" ]
 
 sourceSpanToJSON :: SourceSpan -> Value
 sourceSpanToJSON (SourceSpan _ spanStart spanEnd) =

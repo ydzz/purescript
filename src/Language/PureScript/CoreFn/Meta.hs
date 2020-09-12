@@ -31,6 +31,8 @@ data Meta
   -- The contained value is a where clause
   --
   | IsWhere
+
+  | IsTypeClassMember
   deriving (Show, Eq, Ord)
 
 -- |
