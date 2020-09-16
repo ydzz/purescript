@@ -301,7 +301,6 @@ typeInstanceDictionaryDeclaration
 typeInstanceDictionaryDeclaration sa@(ss, _) name mn deps className tys decls =
   rethrow (addHint (ErrorInInstance className tys)) $ do
   m <- get
-
   -- Lookup the type arguments and member types for the type class
   TypeClassData{..} <-
     maybe (throwError . errorMessage' ss . UnknownName $ fmap TyClassName className) return $
@@ -330,7 +329,7 @@ typeInstanceDictionaryDeclaration sa@(ss, _) name mn deps className tys decls =
       let props = Literal ss $ ObjectLiteral $ map (first mkString) (members ++ superclasses)
           dictTy = foldl srcTypeApp (srcTypeConstructor (fmap (coerceProperName . dictSynonymName) className)) tys
           constrainedTy = quantify (foldr srcConstrainedType dictTy deps)
-          dict = TypeClassDictionaryConstructorApp className props
+          dict = TypeClassDictionaryConstructorApp className props tys
           result = ValueDecl sa name Private [] [MkUnguarded (TypedValue True dict constrainedTy)]
       return result
 

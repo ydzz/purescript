@@ -45,6 +45,9 @@ data Expr a
   -- Variable
   --
   | Var a (Qualified Ident)
+
+  | TypedVar a (Qualified Ident) [T.SourceType]
+  
   -- |
   -- A case expression
   --

@@ -155,6 +155,11 @@ exprToJSON (Var ann i)              = object [ T.pack "type"        .= toJSON "V
                                              , T.pack "annotation"  .= annToJSON ann
                                              , T.pack "value"       .= qualifiedToJSON runIdent i
                                              ]
+exprToJSON (TypedVar ann i types)              = object [ T.pack "type"        .= toJSON "TypedVar"
+                                             , T.pack "annotation"  .= annToJSON ann
+                                             , T.pack "value"       .= qualifiedToJSON runIdent i
+                                             , T.pack "types"       .= toJSON types
+                                             ]
 exprToJSON (Literal ann l)          = object [ T.pack "type"        .= "Literal"
                                              , T.pack "annotation"  .= annToJSON ann
                                              , T.pack "value"       .=  literalToJSON exprToJSON l

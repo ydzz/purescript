@@ -67,7 +67,7 @@ everywhereOnValues f g h = (f', g', h')
   g' (UnaryMinus ss v) = g (UnaryMinus ss (g' v))
   g' (BinaryNoParens op v1 v2) = g (BinaryNoParens (g' op) (g' v1) (g' v2))
   g' (Parens v) = g (Parens (g' v))
-  g' (TypeClassDictionaryConstructorApp name v) = g (TypeClassDictionaryConstructorApp name (g' v))
+  g' (TypeClassDictionaryConstructorApp name v tys) = g (TypeClassDictionaryConstructorApp name (g' v) tys)
   g' (Accessor prop v) = g (Accessor prop (g' v))
   g' (ObjectUpdate obj vs) = g (ObjectUpdate (g' obj) (fmap (fmap g') vs))
   g' (ObjectUpdateNested obj vs) = g (ObjectUpdateNested (g' obj) (fmap g' vs))
@@ -142,7 +142,7 @@ everywhereOnValuesTopDownM f g h = (f' <=< f, g' <=< g, h' <=< h)
   g' (UnaryMinus ss v) = UnaryMinus ss <$> (g v >>= g')
   g' (BinaryNoParens op v1 v2) = BinaryNoParens <$> (g op >>= g') <*> (g v1 >>= g') <*> (g v2 >>= g')
   g' (Parens v) = Parens <$> (g v >>= g')
-  g' (TypeClassDictionaryConstructorApp name v) = TypeClassDictionaryConstructorApp name <$> (g v >>= g')
+  g' (TypeClassDictionaryConstructorApp name v tys) = (\e -> TypeClassDictionaryConstructorApp name e tys)  <$> (g v >>= g')
   g' (Accessor prop v) = Accessor prop <$> (g v >>= g')
   g' (ObjectUpdate obj vs) = ObjectUpdate <$> (g obj >>= g') <*> traverse (sndM (g' <=< g)) vs
   g' (ObjectUpdateNested obj vs) = ObjectUpdateNested <$> (g obj >>= g') <*> traverse (g' <=< g) vs
@@ -212,7 +212,7 @@ everywhereOnValuesM f g h = (f', g', h')
   g' (UnaryMinus ss v) = (UnaryMinus ss <$> g' v) >>= g
   g' (BinaryNoParens op v1 v2) = (BinaryNoParens <$> g' op <*> g' v1 <*> g' v2) >>= g
   g' (Parens v) = (Parens <$> g' v) >>= g
-  g' (TypeClassDictionaryConstructorApp name v) = (TypeClassDictionaryConstructorApp name <$> g' v) >>= g
+  g' (TypeClassDictionaryConstructorApp name v tys) = ((\e -> TypeClassDictionaryConstructorApp name e tys)  <$> g' v) >>= g
   g' (Accessor prop v) = (Accessor prop <$> g' v) >>= g
   g' (ObjectUpdate obj vs) = (ObjectUpdate <$> g' obj <*> traverse (sndM g') vs) >>= g
   g' (ObjectUpdateNested obj vs) = (ObjectUpdateNested <$> g' obj <*> traverse g' vs) >>= g
@@ -285,7 +285,7 @@ everythingOnValues (<>.) f g h i j = (f', g', h', i', j')
   g' v@(UnaryMinus _ v1) = g v <>. g' v1
   g' v@(BinaryNoParens op v1 v2) = g v <>. g' op <>. g' v1 <>. g' v2
   g' v@(Parens v1) = g v <>. g' v1
-  g' v@(TypeClassDictionaryConstructorApp _ v1) = g v <>. g' v1
+  g' v@(TypeClassDictionaryConstructorApp _ v1 _) = g v <>. g' v1
   g' v@(Accessor _ v1) = g v <>. g' v1
   g' v@(ObjectUpdate obj vs) = foldl (<>.) (g v <>. g' obj) (fmap (g' . snd) vs)
   g' v@(ObjectUpdateNested obj vs) = foldl (<>.) (g v <>. g' obj) (fmap g' vs)
@@ -367,7 +367,7 @@ everythingWithContextOnValues s0 r0 (<>.) f g h i j = (f'' s0, g'' s0, h'' s0, i
   g' s (UnaryMinus _ v1) = g'' s v1
   g' s (BinaryNoParens op v1 v2) = g'' s op <>. g'' s v1 <>. g'' s v2
   g' s (Parens v1) = g'' s v1
-  g' s (TypeClassDictionaryConstructorApp _ v1) = g'' s v1
+  g' s (TypeClassDictionaryConstructorApp _ v1 _) = g'' s v1
   g' s (Accessor _ v1) = g'' s v1
   g' s (ObjectUpdate obj vs) = foldl (<>.) (g'' s obj) (fmap (g'' s . snd) vs)
   g' s (ObjectUpdateNested obj vs) = foldl (<>.) (g'' s obj) (fmap (g'' s) vs)
@@ -453,7 +453,7 @@ everywhereWithContextOnValuesM s0 f g h i j = (f'' s0, g'' s0, h'' s0, i'' s0, j
   g' s (UnaryMinus ss v) = UnaryMinus ss <$> g'' s v
   g' s (BinaryNoParens op v1 v2) = BinaryNoParens <$> g'' s op <*> g'' s v1 <*> g'' s v2
   g' s (Parens v) = Parens <$> g'' s v
-  g' s (TypeClassDictionaryConstructorApp name v) = TypeClassDictionaryConstructorApp name <$> g'' s v
+  g' s (TypeClassDictionaryConstructorApp name v tys) = (\e -> TypeClassDictionaryConstructorApp name e tys)  <$> g'' s v
   g' s (Accessor prop v) = Accessor prop <$> g'' s v
   g' s (ObjectUpdate obj vs) = ObjectUpdate <$> g'' s obj <*> traverse (sndM (g'' s)) vs
   g' s (ObjectUpdateNested obj vs) = ObjectUpdateNested <$> g'' s obj <*> traverse (g'' s) vs
@@ -547,7 +547,7 @@ everythingWithScope f g h i j = (f'', g'', h'', i'', \s -> snd . j'' s)
   g' s (UnaryMinus _ v1) = g'' s v1
   g' s (BinaryNoParens op v1 v2) = g'' s op <> g'' s v1 <> g'' s v2
   g' s (Parens v1) = g'' s v1
-  g' s (TypeClassDictionaryConstructorApp _ v1) = g'' s v1
+  g' s (TypeClassDictionaryConstructorApp _ v1 _) = g'' s v1
   g' s (Accessor _ v1) = g'' s v1
   g' s (ObjectUpdate obj vs) = g'' s obj <> foldMap (g'' s . snd) vs
   g' s (ObjectUpdateNested obj vs) = g'' s obj <> foldMap (g'' s) vs
